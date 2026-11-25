@@ -274,6 +274,8 @@ function settingsPanel() {
 
 function helpPanel() {
   openModal('For grown-ups 👩‍🏫',
+    h('p', {}, h('a', { class: 'btn btn-go', href: 'parents/' }, '✏️ Open Parents’ corner to add or edit words')),
+    h('p', {}, 'Or edit the file yourself:'),
     h('p', {}, 'The words come from the file ', h('code', {}, 'words.csv'), '. Open it in Excel, Google Sheets or Notepad. Each row is one word:'),
     h('pre', {}, 'date,subject,word,meaning,sentence\n30/11/2026,english,island,,We sailed to an island.\n30/11/2026,spanish,el perro,the dog,'),
     h('ul', {},
@@ -753,23 +755,36 @@ function memoryGame(stage, words, ctx) {
     { pid: i, side: 'word', text: w.word, lang: ctx.lang, tag: spanish ? 'Español' : 'Word' },
     { pid: i, side: 'meaning', text: w.meaning, lang: 'en-GB', tag: spanish ? 'English' : 'Meaning' },
   ]));
-  let open = [], found = 0, misses = 0, lock = false;
+  let open = [], found = 0, misses = 0, lock = true, preview = true;
   const missCount = new Array(pairs).fill(0);
   const progress = () => ctx.progress(found / pairs, `Pairs found: ${found} of ${pairs}`);
   progress();
 
   const grid = h('div', { class: 'mem-grid' });
-  stage.append(h('p', { class: 'small center' }, spanish ? 'Find each Spanish word and its English meaning. Orange cards are Spanish, blue cards are English.' : 'Find each word and its meaning.'), grid);
+  const intro = h('p', { class: 'mem-intro center' }, '👀 Look at all the cards and try to remember where they are. Tap a card to hear it. Press Start when you’re ready!');
+  const startBtn = h('button', { class: 'btn btn-go btn-start', onclick: startPlaying }, '▶️ Start game');
+  stage.append(intro, h('div', { class: 'actions' }, startBtn), grid,
+    h('p', { class: 'small center' }, spanish ? 'Match each Spanish word to its English meaning. Orange cards are Spanish, blue cards are English.' : 'Match each word to its meaning.'));
 
   cards.forEach((c) => {
-    c.el = h('button', { class: `mem-card side-${c.side}`, 'aria-label': 'Hidden card', onclick: () => flip(c) },
+    c.el = h('button', { class: `mem-card side-${c.side} flipped`, 'aria-label': c.text, onclick: () => flip(c) },
       h('span', { class: 'mem-inner' },
         h('span', { class: 'mem-front' }, '?'),
         h('span', { class: 'mem-back' }, h('span', { class: 'mem-tag' }, c.tag), h('span', { class: 'mem-text' }, c.text))));
     grid.append(c.el);
   });
 
+  function startPlaying() {
+    preview = false;
+    Sound.tap(); Speech.stop();
+    cards.forEach((c, i) => setTimeout(() => { c.el.classList.remove('flipped'); c.el.setAttribute('aria-label', 'Hidden card'); }, i * 60));
+    setTimeout(() => { lock = false; }, cards.length * 60 + 400);
+    intro.textContent = 'Now find the pairs! 🧠';
+    startBtn.parentNode.remove();
+  }
+
   function flip(c) {
+    if (preview) { Speech.say(c.text, c.lang); return; }
     if (lock || c.done || open.includes(c)) return;
     c.el.classList.add('flipped'); c.el.setAttribute('aria-label', c.text);
     Sound.tap();

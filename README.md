@@ -19,7 +19,29 @@ Each go gives a score and **1–3 stars**. It also lists the **words to practise
 
 It is built to be easy to read with dyslexia: a cream background, the Lexend font, extra space between letters, big buttons, every word read aloud, no timers, and orange (not red) for mistakes. The ⚙️ Settings button has options for extra-big letters, talking speed, sound and auto read-aloud.
 
-## Adding each week's words
+## Parents' corner (the easy way to add words)
+
+Go to **`/parents/`** in the game's folder, for example `yoursite.com/words/parents/`. You can also get there from ⚙️ Settings → "For grown-ups" in the game.
+
+- Choose **English** or **Spanish**, pick the start date (it suggests the next Monday), add a test day and list name if you like, then type or paste the words, one per line.
+  - English: `because`, or `because - I stayed in because it rained.` to add a sentence that gets read out.
+  - Spanish: `el perro - the dog`.
+- Every list shows as **Live now**, **Coming up** or **Finished**, with buttons to ✏️ Edit, 👀 Try it (opens the game as if it were that date) or 🗑️ Delete.
+- Then press **💾 Save** (needs PHP, see below) or **⬇️ Download** and upload `words.csv` yourself.
+
+### Turning on "Save" (one-time setup)
+
+Saving straight from the page needs your web host to run **PHP**. Most normal web hosting (cPanel, Plesk and similar) does.
+
+1. In the `parents` folder on your website, copy `config.example.php` to `config.php`.
+2. Open `config.php` and change `change-me` to a password of your own.
+3. Make sure the web server is allowed to write to `words.csv` and to create the `parents/backups` folder. Usually this works without changing anything. If saving says it can't write, ask your host about folder permissions.
+
+The page then shows a password box and a Save button. Each save keeps the previous version in `parents/backups/` (the last 30), in case of mistakes.
+
+If your host doesn't run PHP, the Save button won't appear and you use Download instead. In that case, **don't** upload a `config.php`: without PHP running, anyone could open it in a browser and read the password.
+
+## Adding each week's words by hand
 
 Open `words.csv` in Excel, Google Sheets, Numbers or Notepad. Each row is one word:
 
@@ -46,13 +68,14 @@ The Spanish words for the whole year (Year 6 list, 7A 1-6 to 9B 25-30) are alrea
 
 ## Putting it on your website
 
-It's plain static files with no server code and no database. Upload these four files to the same folder on your site, for example `yoursite.com/words/`:
+It's plain static files with no server code and no database. Upload these files to the same folder on your site, for example `yoursite.com/words/`:
 
 ```
 index.html
 style.css
 app.js
 words.csv
+parents/   (the whole folder: index.html, parents.js, parents.css, save.php, config.example.php, .htaccess)
 ```
 
 To change the words, upload a new `words.csv` over the old one. The game always loads a fresh copy.
