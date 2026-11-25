@@ -108,6 +108,8 @@ function buildData(text) {
     word: col(['word', 'spelling', 'words']),
     meaning: col(['meaning', 'translation', 'english meaning', 'answer']),
     sentence: col(['sentence', 'example', 'hint', 'clue']),
+    test: col(['test', 'test date', 'test_date', 'test day']),
+    unit: col(['unit', 'label', 'topic', 'title']),
   };
   if (ci.date < 0 || ci.word < 0) throw new Error('The first row of words.csv must have column names, including "date" and "word".');
   const data = { english: { weeks: {}, dates: [] }, spanish: { weeks: {}, dates: [] } };
@@ -121,7 +123,7 @@ function buildData(text) {
     const subject = ci.subject >= 0 ? normSubject(get(ci.subject)) : 'english';
     const wk = (data[subject].weeks[date] ||= []);
     if (wk.some((w) => norm(w.word) === norm(word))) return;
-    wk.push({ word, meaning: get(ci.meaning), sentence: get(ci.sentence), subject, date });
+    wk.push({ word, meaning: get(ci.meaning), sentence: get(ci.sentence), subject, date, test: parseDate(get(ci.test)), unit: get(ci.unit) });
   });
   for (const s of Object.values(data)) s.dates = Object.keys(s.weeks).sort();
   data.badRows = bad;
@@ -279,7 +281,8 @@ function helpPanel() {
       h('li', {}, h('b', {}, 'subject'), ' – ', h('code', {}, 'english'), ' or ', h('code', {}, 'spanish'), '.'),
       h('li', {}, h('b', {}, 'word'), ' – the spelling word, or the Spanish word.'),
       h('li', {}, h('b', {}, 'meaning'), ' – for Spanish, the English meaning (needed for Memory Match and Quick Pick). For English you can leave it empty, or add a short clue.'),
-      h('li', {}, h('b', {}, 'sentence'), ' – optional. An example sentence, read out to help.')),
+      h('li', {}, h('b', {}, 'sentence'), ' – optional. An example sentence, read out to help.'),
+      h('li', {}, h('b', {}, 'test'), ' and ', h('b', {}, 'unit'), ' – optional. The test date and a name for the list (like 7B 25-30), shown at the top of the page.')),
     h('p', {}, 'Save it as CSV and upload it in place of the old one. Old weeks stay in the file so they can still be practised.'),
     h('p', {}, 'Tip: to check a future week, add ', h('code', {}, '?date=2026-12-07'), ' to the end of the web address.'),
     DATA && DATA.badRows.length ? h('p', { class: 'warn' }, `⚠️ Some rows were skipped because the date could not be read: row ${DATA.badRows.join(', ')}.`) : null);
@@ -333,6 +336,8 @@ function subjectScreen(subj, week) {
   state.week[subj] = week;
   const words = DATA[subj].weeks[week];
   const isCurrent = week === activeWeek(subj);
+  const testDay = (words.find((w) => w.test) || {}).test;
+  const unit = (words.find((w) => w.unit) || {}).unit;
 
   const wordChips = words.map((w) => h('button', {
     class: 'word-chip', onclick: () => Speech.queue([[w.word, S.lang], w.meaning && subj === 'spanish' ? [w.meaning, 'en-GB'] : null].filter(Boolean)),
@@ -340,7 +345,7 @@ function subjectScreen(subj, week) {
 
   const weekPicker = weeks.length > 1 ? h('label', { class: 'week-pick' }, 'Practise another week: ',
     h('select', { onchange: (e) => subjectScreen(subj, e.target.value) },
-      [...weeks].reverse().map((d) => h('option', { value: d, selected: d === week }, (d === activeWeek(subj) ? 'This week – ' : 'Week of ') + niceDate(d))))) : null;
+      [...weeks].reverse().map((d) => h('option', { value: d, selected: d === week }, (d === activeWeek(subj) ? 'This week – ' : 'Week of ') + niceDate(d) + (DATA[subj].weeks[d].find((w) => w.unit) ? ` (${DATA[subj].weeks[d].find((w) => w.unit).unit})` : ''))))) : null;
 
   const games = GAMES.filter((g) => g.subjects.includes(subj) && words.filter(g.wordFilter || (() => true)).length >= (g.minWords || 1));
   if (subj === 'spanish') games.sort((a, b) => (b.needsMeaning ? 1 : 0) - (a.needsMeaning ? 1 : 0));
@@ -359,6 +364,8 @@ function subjectScreen(subj, week) {
     topBar(homeScreen),
     h('section', { class: 'subject' },
       h('h1', {}, S.emoji, ' ', S.name),
+      unit || testDay ? h('p', { class: 'test-day' }, unit ? h('b', {}, unit) : null, unit && testDay ? ' · ' : null,
+        testDay ? (testDay >= todayISO() ? `📝 Test on ${niceDate(testDay)}${testDay === todayISO() ? ' – today! Good luck!' : ''}` : `Tested on ${niceDate(testDay)}`) : null) : null,
       h('h2', { class: 'section-title' }, '🎮 Pick a game'),
       h('div', { class: 'game-grid' }, gameCards),
       h('h2', { class: 'section-title' }, isCurrent ? '📚 This week’s words' : '📚 Words from that week'),

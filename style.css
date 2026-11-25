@@ -98,7 +98,8 @@ pre { padding: .8em; overflow-x: auto; white-space: pre; }
 .file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 
 /* ---------- subject screen ---------- */
-.subject h1 { text-align: center; }
+.subject h1 { text-align: center; margin-bottom: .2em; }
+.test-day { text-align: center; margin: 0 auto; background: #fff3b0; border-radius: 99px; padding: .3em 1em; width: fit-content; max-width: 100%; font-size: .95rem; }
 .section-title { margin-top: 1.2em; }
 .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
 .game-card {

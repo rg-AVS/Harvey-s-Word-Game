@@ -24,9 +24,9 @@ It is built to be easy to read with dyslexia: a cream background, the Lexend fon
 Open `words.csv` in Excel, Google Sheets, Numbers or Notepad. Each row is one word:
 
 ```
-date,subject,word,meaning,sentence
-30/11/2026,english,island,,We sailed to a small island.
-30/11/2026,spanish,el perro,the dog,
+date,subject,word,meaning,sentence,test,unit
+30/11/2026,english,island,,We sailed to a small island.,,
+27/11/2026,spanish,aunque,even though,,03/12/2026,8A 1-6
 ```
 
 - **date**: the day those words start, usually the Monday. Use `30/11/2026` (day first) or `2026-11-30`.
@@ -34,10 +34,13 @@ date,subject,word,meaning,sentence
 - **word**: the spelling word, or the Spanish word. Include accents (á é í ó ú ñ). In Listen & Spell, a missed accent still counts as right, but the game points it out.
 - **meaning**: the English meaning for Spanish words. For English words, leave it empty or write a short clue.
 - **sentence**: optional. An example sentence that is read out loud, with the word blanked out on screen.
+- **test** and **unit**: optional. The test date and the list's name (like `8A 1-6`), shown at the top of the page as "8A 1-6 · Test on Thursday 3 December".
 
 The game always uses **the newest week whose date has passed**. You can add several weeks at once, and each one switches on by itself on its date. Leave old weeks in the file: he can still practise them from the "Practise another week" menu.
 
 When you save from Excel, choose **CSV UTF-8** so accents survive.
+
+The Spanish words for the whole year (Year 6 list, 7A 1-6 to 9B 25-30) are already in the file. Each list switches on the Friday after the previous Thursday test, so it shows for the six days up to and including its own test day.
 
 **Check a future week early:** add `?date=2026-12-07` to the end of the web address.
 
