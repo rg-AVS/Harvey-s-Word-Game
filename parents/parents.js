@@ -135,19 +135,20 @@ function wordsToLines(words, subj) {
 }
 
 const subjectWeeks = () => weeks.filter((w) => w.subject === subject).sort((a, b) => b.date.localeCompare(a.date));
+const SWITCH_HOUR = 12; // lists switch on at midday on their start date
+const started = (d) => { const n = new Date(); return `${d}T${pad(SWITCH_HOUR)}` <= `${isoOf(n)}T${pad(n.getHours())}`; };
+const START_DAY = { english: 2, spanish: 4 }; // Tuesday, Thursday
 function liveWeek(subj) {
-  const t = today();
   const ds = weeks.filter((w) => w.subject === subj).map((w) => w.date).sort();
-  const past = ds.filter((d) => d <= t);
+  const past = ds.filter(started);
   return past.length ? past[past.length - 1] : ds[0];
 }
 function suggestStart() {
-  const t = today();
-  const d = fromIso(t);
-  const monday = isoOf(new Date(d.getFullYear(), d.getMonth(), d.getDate() + ((8 - d.getDay()) % 7)));
+  const d = fromIso(today());
+  const next = isoOf(new Date(d.getFullYear(), d.getMonth(), d.getDate() + ((START_DAY[subject] - d.getDay() + 7) % 7)));
   const latest = subjectWeeks()[0];
-  const afterLatest = latest ? addDays(latest.date, 7) : monday;
-  return afterLatest > monday ? afterLatest : monday;
+  const afterLatest = latest ? addDays(latest.date, 7) : next;
+  return afterLatest > next ? afterLatest : next;
 }
 
 /* ---------- drawing the page ---------- */
@@ -158,7 +159,7 @@ function render() {
   app.replaceChildren(
     h('div', { class: 'p-top' }, h('a', { href: '../' }, '← Back to the game'), h('a', { href: '../', target: '_blank' }, 'Open the game in a new tab ↗')),
     h('h1', {}, 'Parents’ corner 👩‍🏫'),
-    h('p', { class: 'small' }, 'Add next week’s words here. Each list switches on by itself on its start date.'),
+    h('p', { class: 'small' }, 'Add next week’s words here. Each list switches on by itself at midday on its start date – English on Tuesdays, Spanish on Thursdays, straight after the test.'),
     h('div', { class: 'tabs' }, Object.entries(SUBJECTS).map(([id, s]) =>
       h('button', { class: 'tab' + (id === subject ? ' on' : ''), onclick: () => { if (editing && !confirm('Stop editing this week without saving it?')) return; subject = id; editing = null; Store.set('parentsTab', id); render(); } }, `${s.emoji} ${s.name}`))),
     editorCard(),
@@ -171,7 +172,10 @@ function editorCard() {
   const isEs = subject === 'spanish';
   const wk = editing;
   const start = h('input', { type: 'date', value: wk ? wk.date : suggestStart(), required: true });
-  const test = h('input', { type: 'date', value: wk ? wk.test : '' });
+  const test = h('input', { type: 'date', value: wk ? wk.test : addDays(start.value, 7) });
+  let testTouched = !!wk;
+  test.addEventListener('input', () => { testTouched = true; });
+  start.addEventListener('change', () => { if (!testTouched && start.value) test.value = addDays(start.value, 7); });
   const unit = h('input', { type: 'text', value: wk ? wk.unit : '', placeholder: isEs ? 'e.g. 8A 1-6' : 'e.g. Week 12' });
   const words = h('textarea', {
     spellcheck: isEs ? 'false' : 'true', autocapitalize: 'off',
@@ -205,7 +209,7 @@ function editorCard() {
     h('h2', {}, wk ? '✏️ Edit this week' : `➕ Add a new week of ${SUBJECTS[subject].name}`),
     wk ? h('div', { class: 'editing-note' }, `Editing the list that starts ${nice(wk.date)}.`) : null,
     h('div', { class: 'form-row' },
-      h('label', { class: 'field' }, 'Words start on', start),
+      h('label', { class: 'field' }, h('span', {}, 'Words start on ', h('span', { class: 'opt' }, '(at midday)')), start),
       h('label', { class: 'field' }, h('span', {}, 'Test day ', h('span', { class: 'opt' }, '(optional)')), test),
       h('label', { class: 'field' }, h('span', {}, 'List name ', h('span', { class: 'opt' }, '(optional)')), unit)),
     h('label', { class: 'field', style: 'margin-top:12px' }, h('span', {}, 'Words – one per line ', count), words),
@@ -219,8 +223,7 @@ function editorCard() {
 }
 
 function weekCard(wk, live) {
-  const t = today();
-  const status = wk.date === live ? ['live', 'Live now'] : wk.date > t ? ['soon', 'Coming up'] : ['past', 'Finished'];
+  const status = wk.date === live ? ['live', 'Live now'] : !started(wk.date) ? ['soon', 'Coming up'] : ['past', 'Finished'];
   return h('div', { class: 'week' + (status[0] === 'live' ? ' live' : '') },
     h('div', { class: 'week-head' },
       h('span', { class: 'badge ' + status[0] }, status[1]),

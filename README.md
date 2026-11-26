@@ -51,7 +51,7 @@ date,subject,word,meaning,sentence,test,unit
 27/11/2026,spanish,aunque,even though,,03/12/2026,8A 1-6
 ```
 
-- **date**: the day those words start, usually the Monday. Use `30/11/2026` (day first) or `2026-11-30`.
+- **date**: the day those words start. They switch on at **12:00 midday** that day, straight after the test: Tuesdays for English, Thursdays for Spanish. Use `30/11/2026` (day first) or `2026-11-30`.
 - **subject**: `english` or `spanish`.
 - **word**: the spelling word, or the Spanish word. Include accents (á é í ó ú ñ). In Listen & Spell, a missed accent still counts as right, but the game points it out.
 - **meaning**: the English meaning for Spanish words. For English words, leave it empty or write a short clue.
@@ -62,9 +62,9 @@ The game always uses **the newest week whose date has passed**. You can add seve
 
 When you save from Excel, choose **CSV UTF-8** so accents survive.
 
-The Spanish words for the whole year (Year 6 list, 7A 1-6 to 9B 25-30) are already in the file. Each list switches on the Friday after the previous Thursday test, so it shows for the six days up to and including its own test day.
+The Spanish words for the whole year (Year 6 list, 7A 1-6 to 9B 25-30) are already in the file. Each Spanish list switches on at midday on the Thursday of the previous test, so the old list is still there on the morning of its test.
 
-**Check a future week early:** add `?date=2026-12-07` to the end of the web address.
+**Check a future week early:** add `?date=2026-12-07` to the end of the web address (that shows it as at midday). Add a time to check a morning: `?date=2026-12-01T11:00`.
 
 ## Putting it on your website
 

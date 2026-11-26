@@ -52,10 +52,18 @@ function parseDate(s) {
   if (m < 1 || m > 12 || d < 1 || d > 31) return null;
   return `${y}-${pad(m)}-${pad(d)}`;
 }
-function todayISO() {
-  const override = parseDate(new URLSearchParams(location.search).get('date'));
-  return override || isoOf(new Date());
+const SWITCH_HOUR = 12; // new words switch on at midday on their start date
+function nowStamp() {
+  // ?date=2026-12-01 (midday) or ?date=2026-12-01T11:30 lets grown-ups preview another moment
+  const p = new URLSearchParams(location.search).get('date');
+  const m = p && p.match(/^(.*?)(?:[T ](\d{1,2}):?(\d{2})?)?$/);
+  const d = m && parseDate(m[1]);
+  if (d) return `${d}T${pad(m[2] ? +m[2] : SWITCH_HOUR)}:${pad(m[3] ? +m[3] : 0)}`;
+  const n = new Date();
+  return `${isoOf(n)}T${pad(n.getHours())}:${pad(n.getMinutes())}`;
 }
+const todayISO = () => nowStamp().slice(0, 10);
+const started = (d) => `${d}T${pad(SWITCH_HOUR)}:00` <= nowStamp();
 function niceDate(iso) {
   const [y, m, d] = iso.split('-').map(Number);
   return new Date(y, m - 1, d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -145,12 +153,12 @@ async function loadWords() {
 }
 
 function pastWeeks(subj) {
-  const ds = DATA[subj].dates, t = todayISO();
-  const past = ds.filter((d) => d <= t);
+  const ds = DATA[subj].dates;
+  const past = ds.filter(started);
   return past.length ? past : ds.slice(0, 1); // if everything is in the future, use the first week
 }
 const activeWeek = (subj) => { const p = pastWeeks(subj); return p.length ? p[p.length - 1] : null; };
-const nextWeek = (subj) => DATA[subj].dates.find((d) => d > todayISO()) || null;
+const nextWeek = (subj) => DATA[subj].dates.find((d) => !started(d)) || null;
 
 /* ---------- talking ---------- */
 const Speech = {
@@ -279,7 +287,7 @@ function helpPanel() {
     h('p', {}, 'The words come from the file ', h('code', {}, 'words.csv'), '. Open it in Excel, Google Sheets or Notepad. Each row is one word:'),
     h('pre', {}, 'date,subject,word,meaning,sentence\n30/11/2026,english,island,,We sailed to an island.\n30/11/2026,spanish,el perro,the dog,'),
     h('ul', {},
-      h('li', {}, h('b', {}, 'date'), ' – the day those words start (for example the Monday). Write it as 30/11/2026 or 2026-11-30. The game always shows the newest week that has started, so next week’s words switch on all by themselves.'),
+      h('li', {}, h('b', {}, 'date'), ' – the day those words start. They switch on at midday that day (after the test). Write it as 01/12/2026 or 2026-12-01. The game always shows the newest list that has started, so next week’s words switch on all by themselves.'),
       h('li', {}, h('b', {}, 'subject'), ' – ', h('code', {}, 'english'), ' or ', h('code', {}, 'spanish'), '.'),
       h('li', {}, h('b', {}, 'word'), ' – the spelling word, or the Spanish word.'),
       h('li', {}, h('b', {}, 'meaning'), ' – for Spanish, the English meaning (needed for Memory Match and Quick Pick). For English you can leave it empty, or add a short clue.'),
@@ -373,7 +381,7 @@ function subjectScreen(subj, week) {
       h('h2', { class: 'section-title' }, isCurrent ? '📚 This week’s words' : '📚 Words from that week'),
       h('p', { class: 'small' }, 'Tap a word to hear it.'),
       h('div', { class: 'word-list' }, wordChips),
-      upcoming ? h('p', { class: 'small' }, `🗓️ New words arrive on ${niceDate(upcoming)}.`) : null,
+      upcoming ? h('p', { class: 'small' }, `🗓️ New words arrive on ${niceDate(upcoming)} at midday.`) : null,
       weekPicker));
 }
 
