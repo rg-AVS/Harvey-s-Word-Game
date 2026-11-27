@@ -1,4 +1,4 @@
-# Harvey's Word Game 🚀
+# Word Game 🚀
 
 A small, dyslexia-friendly website with games for weekly **English spelling** and **Spanish** words.
 The words come from one file, `words.csv`, and each week's words switch on by themselves on the date you give them.
@@ -19,36 +19,54 @@ Each go gives a score and **1–3 stars**. It also lists the **words to practise
 
 It is built to be easy to read with dyslexia: a cream background, the Lexend font, extra space between letters, big buttons, every word read aloud, no timers, and orange (not red) for mistakes. The ⚙️ Settings button has options for extra-big letters, talking speed, sound and auto read-aloud.
 
-## Parents' corner (the easy way to add words)
+## Students and scores
 
-Go to **`/parents/`** in the game's folder, for example `yoursite.com/words/parents/`. You can also get there from ⚙️ Settings → "For grown-ups" in the game.
+Several children can use the same game. When a child opens it, they tap their name on a **"Who's playing?"** screen. The device remembers them, and there's a "Change player" button on the home screen.
 
-- Choose **English** or **Spanish**, pick the start date (it suggests the next Monday), add a test day and list name if you like, then type or paste the words, one per line.
+- Every child gets the same Spanish words.
+- English words come in **groups** (Set 1, Set 2, and so on). Each child gets their own group's English lists.
+- After every game, the score and the words they found tricky are saved on your website.
+
+This part needs your web host to run **PHP**. Most normal web hosting (cPanel, Plesk and similar) does. Without PHP, the game still works for one child as before, with no name screen and no scores page.
+
+### One-time setup
+
+1. Upload everything (see "Putting it on your website" below).
+2. In the `api` folder on your website, copy `config.example.php` to `config.php`. Open it and change `change-me` to a password of your own. This is the **grown-ups' password**.
+3. Go to **`/parentswords/`**, unlock it with that password, open the **👧 Students** tab and add each child: name, English group and a PIN (one is made up for you). Press **Save students**.
+4. Give each family their child's name and PIN so they can see scores at **`/parents/`**.
+
+The web server needs to be allowed to create a `data` folder next to the game and to write `words.csv`. Usually this just works. If saving says it can't write, ask your host about folder permissions.
+
+The students list and the scores are kept in the `data` folder, in files that the web server refuses to show to anyone who types their address. Scores are kept as one row per game played, so you can see a history week by week.
+
+### `/parents/`: scores
+
+Choose a student and type their PIN (the grown-ups' password also works for any child). It shows:
+
+- **This week**, for English and for Spanish: the words, how many goes, stars won, days played, best score in each game, and the **words that were tricky** (and how often).
+- **Earlier weeks**: goes, average score and the trickiest words for each past list.
+- **Every game played**, with the date and time.
+
+### `/parentswords/`: words and students
+
+- **English / Spanish tabs**: pick the start date (it suggests the next Tuesday for English and the next Thursday for Spanish, at midday), add a test day and list name if you like, then type or paste the words, one per line.
   - English: `because`, or `because - I stayed in because it rained.` to add a sentence that gets read out.
   - Spanish: `el perro - the dog`.
+  - For English, choose which group the list is **for**: Set 1, Set 2, or **Everyone**. The group buttons at the top show who is in each group.
 - Every list shows as **Live now**, **Coming up** or **Finished**, with buttons to ✏️ Edit, 👀 Try it (opens the game as if it were that date) or 🗑️ Delete.
-- Then press **💾 Save** (needs PHP, see below) or **⬇️ Download** and upload `words.csv` yourself.
-
-### Turning on "Save" (one-time setup)
-
-Saving straight from the page needs your web host to run **PHP**. Most normal web hosting (cPanel, Plesk and similar) does.
-
-1. In the `parents` folder on your website, copy `config.example.php` to `config.php`.
-2. Open `config.php` and change `change-me` to a password of your own.
-3. Make sure the web server is allowed to write to `words.csv` and to create the `parents/backups` folder. Usually this works without changing anything. If saving says it can't write, ask your host about folder permissions.
-
-The page then shows a password box and a Save button. Each save keeps the previous version in `parents/backups/` (the last 30), in case of mistakes.
-
-If your host doesn't run PHP, the Save button won't appear and you use Download instead. In that case, **don't** upload a `config.php`: without PHP running, anyone could open it in a browser and read the password.
+- Press **💾 Save words** (after unlocking), or **⬇️ Download** and upload `words.csv` yourself.
+- Each save keeps the previous `words.csv` in `data/backups/` (the last 30).
+- **👧 Students tab**: add, rename or remove children, change their group or PIN. Removing a child keeps their old scores.
 
 ## Adding each week's words by hand
 
 Open `words.csv` in Excel, Google Sheets, Numbers or Notepad. Each row is one word:
 
 ```
-date,subject,word,meaning,sentence,test,unit
-30/11/2026,english,island,,We sailed to a small island.,,
-27/11/2026,spanish,aunque,even though,,03/12/2026,8A 1-6
+date,subject,word,meaning,sentence,test,unit,set
+01/12/2026,english,island,,We sailed to a small island.,08/12/2026,,set1
+26/11/2026,spanish,aunque,even though,,03/12/2026,8A 1-6,
 ```
 
 - **date**: the day those words start. They switch on at **12:00 midday** that day, straight after the test: Tuesdays for English, Thursdays for Spanish. Use `30/11/2026` (day first) or `2026-11-30`.
@@ -57,6 +75,7 @@ date,subject,word,meaning,sentence,test,unit
 - **meaning**: the English meaning for Spanish words. For English words, leave it empty or write a short clue.
 - **sentence**: optional. An example sentence that is read out loud, with the word blanked out on screen.
 - **test** and **unit**: optional. The test date and the list's name (like `8A 1-6`), shown at the top of the page as "8A 1-6 · Test on Thursday 3 December".
+- **set**: which group of children an English list is for (`set1`, `set2`…). Leave it empty for everyone. Spanish is always empty.
 
 The game always uses **the newest week whose date has passed**. You can add several weeks at once, and each one switches on by itself on its date. Leave old weeks in the file: he can still practise them from the "Practise another week" menu.
 
@@ -68,15 +87,19 @@ The Spanish words for the whole year (Year 6 list, 7A 1-6 to 9B 25-30) are alrea
 
 ## Putting it on your website
 
-It's plain static files with no server code and no database. Upload these files to the same folder on your site, for example `yoursite.com/words/`:
+Upload these files and folders to the same folder on your site, for example `yoursite.com/words/`:
 
 ```
 index.html
 style.css
 app.js
 words.csv
-parents/   (the whole folder: index.html, parents.js, parents.css, save.php, config.example.php, .htaccess)
+api/            (the server part – needs PHP; include the hidden .htaccess)
+parents/        (the scores page)
+parentswords/   (the words and students page)
 ```
+
+When you upload updates later, don't overwrite or delete the `data` folder on your website (it holds the students and scores) or your `api/config.php` (it holds your password).
 
 To change the words, upload a new `words.csv` over the old one. The game always loads a fresh copy.
 
@@ -92,6 +115,6 @@ python3 -m http.server 8000
 
 Then open http://localhost:8000.
 
-## Changing the name
+## Names
 
-The name "Harvey" is set at the top of `app.js` (`KID_NAME`) and in the `<title>` in `index.html`.
+Children's names come from the Students list. With no students set up (or no PHP), the game just says "Hi there!".

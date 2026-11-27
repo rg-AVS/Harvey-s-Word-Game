@@ -53,3 +53,42 @@ details.past summary { cursor: pointer; font-weight: 600; padding: 8px 0; color:
 @media (max-width: 480px) { .savebar .btn { flex: 1 1 40%; } .savebar input[type=password] { flex-basis: 55%; } }
 .remember { font-size: .75rem; display: flex; align-items: center; gap: 4px; color: var(--muted); }
 .editing-note { background: var(--amber-soft); border-radius: 10px; padding: .4em .7em; font-size: .85rem; margin-bottom: 10px; }
+
+/* ---------- shared bits for /parents and /parentswords ---------- */
+.p-note { background: #f3ead3; border-radius: 14px; padding: .6em .9em; font-size: .85rem; margin: 12px 0; }
+.p-note.ok { background: var(--green-soft); }
+.linkish { font: inherit; background: none; border: 0; padding: 0; color: var(--purple); font-weight: 600; cursor: pointer; text-decoration: underline; }
+.login-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.login-row input, .big-select, .login input[type=password] {
+  font: inherit; font-size: 1rem; padding: .5em .6em; border-radius: 12px; border: 2px solid var(--line); background: #fff; color: var(--ink); flex: 1 1 200px; min-width: 0;
+}
+.big-select { width: 100%; }
+.set-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -4px 0 6px; }
+.chip { font: inherit; font-size: .85rem; font-weight: 600; padding: .35em .8em; border-radius: 99px; border: 2px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.chip.on { border-color: var(--blue); background: var(--blue-soft); }
+.chip small { font-weight: 400; color: var(--muted); }
+.badge.set { background: var(--blue-soft); color: var(--blue); }
+.field select { font: inherit; font-size: 1rem; padding: .5em .6em; border-radius: 12px; border: 2px solid var(--line); background: #fff; }
+
+.table-wrap { overflow-x: auto; margin: 8px 0; }
+table.students, table.score-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+table.students th, table.score-table th { text-align: left; font-size: .75rem; color: var(--muted); font-weight: 600; padding: 4px 6px; }
+table.students td, table.score-table td { padding: 6px; border-top: 1px solid var(--line); vertical-align: middle; }
+table.students input, table.students select { font: inherit; font-size: .95rem; padding: .4em .5em; border-radius: 10px; border: 2px solid var(--line); background: #fff; width: 100%; min-width: 70px; }
+table.students input.pin { max-width: 72px; min-width: 60px; letter-spacing: .1em; }
+table.students td, table.students th { padding-left: 3px; padding-right: 3px; }
+.btn-small { min-height: 38px; width: 42px; padding: 0; }
+
+/* scores page */
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
+.stat { background: var(--bg); border-radius: 14px; padding: 10px; text-align: center; display: flex; flex-direction: column; }
+.stat b { font-size: 1.5rem; color: var(--purple); }
+.stat span { font-size: .75rem; color: var(--muted); }
+.stars { letter-spacing: 0; white-space: nowrap; }
+.score-table small { color: var(--muted); }
+.week-words span.hot { background: var(--amber-soft); border-color: var(--amber); }
+.empty { color: var(--muted); }
+.scores-page #app { padding-bottom: 40px; }
+details.recent summary { cursor: pointer; }
+.tag { background: #ece6ff; border-radius: 6px; padding: 0 .4em; color: var(--purple); }
+h3 { font-size: 1rem; margin: 1em 0 .2em; }

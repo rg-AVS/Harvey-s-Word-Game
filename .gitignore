@@ -1,3 +1,3 @@
-parents/config.php
-parents/backups/
+api/config.php
+data/
 words.csv.tmp

@@ -1,7 +1,0 @@
-# Never serve the password file or old backups directly.
-<Files "config.php">
-  Require all denied
-</Files>
-<IfModule mod_autoindex.c>
-  Options -Indexes
-</IfModule>

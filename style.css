@@ -256,3 +256,20 @@ select { font: inherit; font-size: .9rem; padding: .4em .6em; border-radius: 10p
   .slot, .tile { font-size: 1.5rem; }
   .lb, .ml { font-size: 1.5rem; min-width: 1.7em; }
 }
+
+/* ---------- who's playing ---------- */
+.who-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin: 24px 0; }
+.who-btn {
+  font: inherit; letter-spacing: inherit; font-weight: 700; font-size: 1.25rem; cursor: pointer; border: 0; border-radius: 22px;
+  padding: 18px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; color: #fff;
+  box-shadow: 0 6px 0 rgba(38, 41, 59, .18); transition: transform .1s;
+}
+.who-btn:active { transform: translateY(4px); box-shadow: none; }
+.who-initial { width: 64px; height: 64px; border-radius: 50%; background: rgba(255, 255, 255, .25); display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+.who-btn.c0 { background: linear-gradient(160deg, #8b6cff, #6d4aff); }
+.who-btn.c1 { background: linear-gradient(160deg, #4b8ff7, #2563eb); }
+.who-btn.c2 { background: linear-gradient(160deg, #fb923c, #ea580c); }
+.who-btn.c3 { background: linear-gradient(160deg, #34d399, #059669); }
+.who-btn.c4 { background: linear-gradient(160deg, #f472b6, #db2777); }
+.who-btn.c5 { background: linear-gradient(160deg, #facc15, #ca8a04); }
+.btn-switch { min-height: 40px; padding: .3em .9em; font-size: .85rem; margin-bottom: 6px; }

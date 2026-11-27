@@ -1,11 +1,12 @@
 'use strict';
 
 /* =====================================================================
-   Harvey's Word Game
+   Word Game
    Reads this week's words from words.csv and turns them into games.
+   If the website runs PHP and has students set up, it asks who is playing,
+   shows that child's English set and sends their scores to the server.
    ===================================================================== */
 
-const KID_NAME = 'Harvey';
 const MAX_WORDS_PER_GAME = 12;   // most words used in one go
 const MEMORY_PAIRS = 6;          // pairs in Memory Match
 
@@ -102,10 +103,14 @@ function normSubject(s) {
 }
 
 let DATA = null;
+let WORDS_TEXT = null;
+let USERS = [];        // [{ name, set }] from api/users.php – empty if not set up
+let USER = null;       // who is playing
 let loadProblem = null;
 const state = { week: {} };
+const userKey = () => (USER ? USER.name : '_');
 
-function buildData(text) {
+function buildData(text, userSet = null) {
   const rows = parseCSV(text);
   if (rows.length < 2) throw new Error('words.csv has no words in it yet.');
   const header = rows[0].map((x) => norm(x));
@@ -118,6 +123,7 @@ function buildData(text) {
     sentence: col(['sentence', 'example', 'hint', 'clue']),
     test: col(['test', 'test date', 'test_date', 'test day']),
     unit: col(['unit', 'label', 'topic', 'title']),
+    set: col(['set', 'group', 'english set']),
   };
   if (ci.date < 0 || ci.word < 0) throw new Error('The first row of words.csv must have column names, including "date" and "word".');
   const data = { english: { weeks: {}, dates: [] }, spanish: { weeks: {}, dates: [] } };
@@ -129,6 +135,8 @@ function buildData(text) {
     const date = parseDate(get(ci.date));
     if (!date) { bad.push(n + 2); return; }
     const subject = ci.subject >= 0 ? normSubject(get(ci.subject)) : 'english';
+    const rowSet = norm(get(ci.set));
+    if (rowSet && userSet !== null && rowSet !== norm(userSet)) return; // a list for a different set
     const wk = (data[subject].weeks[date] ||= []);
     if (wk.some((w) => norm(w.word) === norm(word))) return;
     wk.push({ word, meaning: get(ci.meaning), sentence: get(ci.sentence), subject, date, test: parseDate(get(ci.test)), unit: get(ci.unit) });
@@ -148,8 +156,33 @@ async function loadWords() {
     text = Store.get('csvCache', null);
     if (!text) { loadProblem = 'I could not open words.csv. If you opened index.html straight from your computer, choose the file below instead (or see the README for how to put the game online).'; return false; }
   }
-  try { DATA = buildData(text); Store.set('csvCache', text); return true; }
+  try { DATA = buildData(text); WORDS_TEXT = text; Store.set('csvCache', text); return true; }
   catch (e) { loadProblem = e.message; return false; }
+}
+
+async function loadUsers() {
+  try {
+    const r = await fetch('api/users.php', { cache: 'no-store' });
+    const j = await r.json();
+    USERS = Array.isArray(j.users) ? j.users : [];
+  } catch { USERS = []; }
+}
+function chooseUser(u) {
+  USER = u;
+  if (u) Store.set('user', u.name);
+  DATA = buildData(WORDS_TEXT, u ? u.set : null);
+  state.week = {};
+  document.title = u ? `${u.name}'s Word Game` : 'Word Game';
+}
+
+function sendScore(game, subj, week, run, stars) {
+  if (!USER) return;
+  try {
+    fetch('api/score.php', {
+      method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: USER.name, subject: subj, week, game: game.id, score: run.score, max: run.max, stars, practice: run.practice, tricky: run.tricky.map((w) => w.word) }),
+    }).catch(() => {});
+  } catch { /* offline – the game still works */ }
 }
 
 function pastWeeks(subj) {
@@ -277,12 +310,14 @@ function settingsPanel() {
     toggle('autoSpeak', '🗣️ Read words out loud by itself'),
     toggle('big', '🔠 Extra big letters'),
     h('label', { class: 'toggle' }, h('span', {}, '🐢 Talking speed '), rate),
-    h('button', { class: 'btn btn-ghost', onclick: helpPanel }, '👩‍🏫 For grown-ups: adding words'));
+    h('button', { class: 'btn btn-ghost', onclick: helpPanel }, '👩‍🏫 For grown-ups'));
 }
 
 function helpPanel() {
   openModal('For grown-ups 👩‍🏫',
-    h('p', {}, h('a', { class: 'btn btn-go', href: 'parents/' }, '✏️ Open Parents’ corner to add or edit words')),
+    h('div', { class: 'actions', style: 'justify-content:flex-start' },
+      h('a', { class: 'btn btn-go', href: 'parents/' }, '📊 See scores'),
+      h('a', { class: 'btn btn-go', href: 'parentswords/' }, '✏️ Add or edit words')),
     h('p', {}, 'Or edit the file yourself:'),
     h('p', {}, 'The words come from the file ', h('code', {}, 'words.csv'), '. Open it in Excel, Google Sheets or Notepad. Each row is one word:'),
     h('pre', {}, 'date,subject,word,meaning,sentence\n30/11/2026,english,island,,We sailed to an island.\n30/11/2026,spanish,el perro,the dog,'),
@@ -292,7 +327,8 @@ function helpPanel() {
       h('li', {}, h('b', {}, 'word'), ' – the spelling word, or the Spanish word.'),
       h('li', {}, h('b', {}, 'meaning'), ' – for Spanish, the English meaning (needed for Memory Match and Quick Pick). For English you can leave it empty, or add a short clue.'),
       h('li', {}, h('b', {}, 'sentence'), ' – optional. An example sentence, read out to help.'),
-      h('li', {}, h('b', {}, 'test'), ' and ', h('b', {}, 'unit'), ' – optional. The test date and a name for the list (like 7B 25-30), shown at the top of the page.')),
+      h('li', {}, h('b', {}, 'test'), ' and ', h('b', {}, 'unit'), ' – optional. The test date and a name for the list (like 7B 25-30), shown at the top of the page.'),
+      h('li', {}, h('b', {}, 'set'), ' – optional. Which group of children the list is for (like set1). Leave it empty for everyone – Spanish is always empty.')),
     h('p', {}, 'Save it as CSV and upload it in place of the old one. Old weeks stay in the file so they can still be practised.'),
     h('p', {}, 'Tip: to check a future week, add ', h('code', {}, '?date=2026-12-07'), ' to the end of the web address.'),
     DATA && DATA.badRows.length ? h('p', { class: 'warn' }, `⚠️ Some rows were skipped because the date could not be read: row ${DATA.badRows.join(', ')}.`) : null);
@@ -301,7 +337,7 @@ function helpPanel() {
 function topBar(back) {
   return h('header', { class: 'topbar' },
     back ? h('button', { class: 'btn btn-round', 'aria-label': 'Back', onclick: back }, '⬅') : h('span', { class: 'spacer' }),
-    h('div', { class: 'brand' }, '🚀 ', `${KID_NAME}'s Word Game`),
+    h('div', { class: 'brand' }, '🚀 ', USER ? `${USER.name}'s Word Game` : 'Word Game'),
     h('button', { class: 'btn btn-round', 'aria-label': 'Settings', onclick: settingsPanel }, '⚙️'));
 }
 
@@ -309,7 +345,7 @@ function topBar(back) {
    SCREENS
    ===================================================================== */
 
-function bestFor(subj, week, gameId) { return Store.get(`best:${subj}:${week}:${gameId}`, null); }
+function bestFor(subj, week, gameId) { return Store.get(`best:${userKey()}:${subj}:${week}:${gameId}`, null); }
 function weekStars() {
   let n = 0;
   for (const s of Object.keys(SUBJECTS)) {
@@ -332,10 +368,22 @@ function homeScreen() {
   render(
     topBar(null),
     h('section', { class: 'home' },
-      h('h1', { class: 'hello' }, `Hi ${KID_NAME}! 👋`),
+      h('h1', { class: 'hello' }, USER ? `Hi ${USER.name}! 👋` : 'Hi there! 👋'),
+      USERS.length > 1 ? h('button', { class: 'btn btn-ghost btn-switch', onclick: whoScreen }, `Not ${USER ? USER.name : 'you'}? Change player`) : null,
       h('p', { class: 'lead' }, 'What do you want to practise today?'),
       h('div', { class: 'subject-grid' }, cards),
       h('div', { class: 'star-bank' }, h('span', { class: 'star-big' }, '⭐'), h('span', {}, h('b', {}, stars), ` star${stars === 1 ? '' : 's'} won this week`))));
+}
+
+function whoScreen() {
+  render(
+    topBar(null),
+    h('section', { class: 'home' },
+      h('h1', { class: 'hello' }, 'Who’s playing? 👋'),
+      h('p', { class: 'lead' }, 'Tap your name.'),
+      h('div', { class: 'who-grid' }, USERS.map((u, i) => h('button', {
+        class: 'who-btn c' + (i % 6), onclick: () => { chooseUser(u); homeScreen(); },
+      }, h('span', { class: 'who-initial' }, u.name.slice(0, 1).toUpperCase()), h('span', {}, u.name))))));
 }
 
 function subjectScreen(subj, week) {
@@ -441,12 +489,13 @@ function resultsScreen(game, subj, week, run, wordsPlayed) {
   const stars = pct >= 0.9 ? 3 : pct >= 0.6 ? 2 : 1;
   let newBest = false;
   if (!run.practice) {
-    const key = `best:${subj}:${week}:${game.id}`;
+    const key = `best:${userKey()}:${subj}:${week}:${game.id}`;
     const prev = Store.get(key, null);
     newBest = !!prev && run.score > prev.score;
     Store.set(key, { score: Math.max(run.score, prev?.score || 0), stars: Math.max(stars, prev?.stars || 0) });
   }
   Store.set('played', Store.get('played', 0) + 1);
+  sendScore(game, subj, week, run, stars);
 
   const title = stars === 3 ? 'WOW! Superstar! 🌟' : stars === 2 ? 'Great work! 🎉' : 'Good effort! 💪';
   const sub = stars === 3 ? 'You are a word wizard!' : stars === 2 ? 'You’re getting really good at these.' : 'Every go makes your brain stronger. Try again?';
@@ -838,7 +887,7 @@ const GAMES = [
 function problemScreen() {
   const file = h('input', { type: 'file', accept: '.csv,text/csv', onchange: async (e) => {
     const f = e.target.files[0]; if (!f) return;
-    try { const t = await f.text(); DATA = buildData(t); Store.set('csvCache', t); homeScreen(); }
+    try { const t = await f.text(); DATA = buildData(t); WORDS_TEXT = t; Store.set('csvCache', t); homeScreen(); }
     catch (err) { alert(err.message); }
   } });
   render(topBar(null), h('section', { class: 'home' },
@@ -852,5 +901,9 @@ function problemScreen() {
 (async function start() {
   applySettings();
   Speech.init();
-  if (await loadWords()) homeScreen(); else problemScreen();
+  const [ok] = await Promise.all([loadWords(), loadUsers()]);
+  if (!ok) return problemScreen();
+  if (!USERS.length) { chooseUser(null); return homeScreen(); }
+  const saved = USERS.find((u) => u.name === Store.get('user', ''));
+  if (saved) { chooseUser(saved); homeScreen(); } else whoScreen();
 })();
